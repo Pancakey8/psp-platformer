@@ -2,6 +2,7 @@
 #include "SDL2/SDL_render.h"
 #include "SDL2/SDL_stdinc.h"
 #include "SDL2/SDL_timer.h"
+#include "SDL2/SDL_ttf.h"
 #include "object.h"
 #include "player.h"
 #include "scene.h"
@@ -13,6 +14,7 @@ void logger(void *, int, SDL_LogPriority, const char *msg) {
 
 int main(int, char *[]) {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
+  TTF_Init();
 
   SDL_Window *window = SDL_CreateWindow("window", SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED, 480, 272, 0);
@@ -25,8 +27,6 @@ int main(int, char *[]) {
 #endif
 
   scenes_register(window, renderer);
-
-  current_scene->init(current_scene);
 
   int running = 1;
   Uint64 last = SDL_GetPerformanceCounter();
@@ -62,6 +62,7 @@ int main(int, char *[]) {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
+  TTF_Quit();
 
   return 0;
 }

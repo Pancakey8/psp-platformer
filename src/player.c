@@ -52,7 +52,7 @@ void player_update(player_t *player, float delta) {
 #ifdef LINUX
   char jump_held = kb[SDL_SCANCODE_W];
 #else
-  char jump_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_UP);
+  char jump_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_UP) || is_controller_down(SDL_CONTROLLER_BUTTON_X);
 #endif
   // SDL_Log("%f,%b", dirx, jump_held);
 

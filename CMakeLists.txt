@@ -3,13 +3,20 @@ project(psp-platformer)
 
 add_executable(psp-platformer src/main.c src/player.c src/object.c src/camera.c src/scene.c)
 
+file(COPY ${CMAKE_SOURCE_DIR}/res DESTINATION ${CMAKE_BINARY_DIR})
+
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
+pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
 
-target_include_directories(psp-platformer PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(psp-platformer PRIVATE
+    ${SDL2_INCLUDE_DIRS}
+    ${SDL2_TTF_INCLUDE_DIRS})
 target_compile_options(psp-platformer PRIVATE -ggdb -Wall -Wextra)
 
-target_link_libraries(psp-platformer PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(psp-platformer PRIVATE
+    ${SDL2_LIBRARIES}
+    ${SDL2_TTF_LIBRARIES})
 
 if(PSP)
     create_pbp_file(

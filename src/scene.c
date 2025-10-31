@@ -1,6 +1,13 @@
 #include "scene.h"
+#include "SDL2/SDL_blendmode.h"
+#include "SDL2/SDL_events.h"
+#include "SDL2/SDL_gamecontroller.h"
+#include "SDL2/SDL_keycode.h"
+#include "SDL2/SDL_render.h"
+#include "SDL2/SDL_surface.h"
 #include "camera.h"
 #include "player.h"
+#include <SDL2/SDL_ttf.h>
 #include <string.h>
 
 scene_t *scene_new_direct(scene_t scene) {
@@ -32,11 +39,11 @@ void game_level1_init(scene_t *scene) {
   data->camera = camera_new(w, h);
   object_t *objs[] = {
       object_new(shape_make_rect(20, 220, 200, 80)),
-      object_new(shape_make_rect(380, 120, 100, 40)),
+      object_new(shape_make_rect(250, 150, 100, 40)),
   };
-  data->objects_count = sizeof(objs) / sizeof(object_t*);
-  data->objects = calloc(data->objects_count, sizeof(object_t*));
-  memcpy(data->objects, objs, data->objects_count * sizeof(object_t*));
+  data->objects_count = sizeof(objs) / sizeof(object_t *);
+  data->objects = calloc(data->objects_count, sizeof(object_t *));
+  memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
   data->player = player_new(&data->camera);
   data->player->objects = data->objects;
   data->player->objects_count = data->objects_count;
@@ -60,12 +67,76 @@ void game_level1_destroy(scene_t *scene) {
   level_data_t *data = scene->data;
   free(data->player);
   for (size_t i = 0; i < data->objects_count; ++i) {
-      object_free(data->objects[i]);
+    object_free(data->objects[i]);
   }
   free(data->objects);
 }
 
+// MAIN MENU
+typedef struct main_menu_data {
+  TTF_Font *font_s;
+  TTF_Font *font_l;
+  int w, h;
+  // title
+  SDL_Rect title_rect;
+  SDL_Texture *title_texture;
+  // press start 
+  SDL_Rect start_rect;
+  SDL_Texture *start_texture;
+} main_menu_data_t;
+
+void main_menu_init(struct scene *scene) {
+  main_menu_data_t *data = scene->data;
+  data->font_s = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", 12);
+  data->font_l = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", 36);
+  SDL_GetRendererOutputSize(scene->renderer, &data->w, &data->h);
+
+  SDL_Color fg = {0, 0, 0, 255};
+  SDL_Surface *surface =
+      TTF_RenderUTF8_Blended(data->font_l, "PSP Platformer", fg);
+  int gap = surface->h + 20;
+  data->title_rect = (SDL_Rect){(data->w - surface->w) / 2, data->h / 3,
+                                surface->w, surface->h};
+  data->title_texture = SDL_CreateTextureFromSurface(scene->renderer, surface);
+  SDL_FreeSurface(surface);
+  surface =
+      TTF_RenderUTF8_Blended(data->font_s, "Press start", fg);
+  data->start_rect = (SDL_Rect){(data->w - surface->w) / 2, data->h / 3 + gap,
+                                surface->w, surface->h};
+  data->start_texture = SDL_CreateTextureFromSurface(scene->renderer, surface);
+  SDL_FreeSurface(surface);
+}
+void main_menu_event(struct scene *scene, SDL_Event const *event) {
+  switch (event->type) {
+#ifdef LINUX
+  case SDL_KEYDOWN: {
+    if (event->key.keysym.sym == SDLK_RETURN) {
+      current_scene = scene_game_level1;
+    }
+  } break;
+#else
+  case SDL_CONTROLLERBUTTONDOWN: {
+    if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+      current_scene = scene_game_level1;
+    }
+  } break;
+#endif
+  }
+}
+void main_menu_update(struct scene *scene, float dt) {}
+void main_menu_render(struct scene *scene) {
+  main_menu_data_t *data = scene->data;
+  SDL_RenderCopy(scene->renderer, data->title_texture, NULL, &data->title_rect);
+  SDL_RenderCopy(scene->renderer, data->start_texture, NULL, &data->start_rect);
+}
+void main_menu_destroy(struct scene *scene) {
+  main_menu_data_t *data = scene->data;
+  TTF_CloseFont(data->font_s);
+  SDL_DestroyTexture(data->title_texture);
+}
+
 scene_t *scene_game_level1 = NULL;
+scene_t *scene_main_menu = NULL;
 scene_t *current_scene = NULL;
 
 void scenes_register(SDL_Window *window, SDL_Renderer *renderer) {
@@ -78,5 +149,16 @@ void scenes_register(SDL_Window *window, SDL_Renderer *renderer) {
                                  .update = &game_level1_update,
                                  .render = &game_level1_render,
                                  .destroy = &game_level1_destroy});
-  current_scene = scene_game_level1;
+  scene_game_level1->init(scene_game_level1);
+  scene_main_menu =
+      scene_new_direct((scene_t){.window = window,
+                                 .renderer = renderer,
+                                 .data = calloc(1, sizeof(main_menu_data_t)),
+                                 .init = &main_menu_init,
+                                 .event = &main_menu_event,
+                                 .update = &main_menu_update,
+                                 .render = &main_menu_render,
+                                 .destroy = &main_menu_destroy});
+  scene_main_menu->init(scene_main_menu);
+  current_scene = scene_main_menu;
 }
