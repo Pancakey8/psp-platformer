@@ -7,7 +7,7 @@
 
 extern SDL_GameController *s_player_controller;
 
-struct player {
+typedef struct player {
     float x;
     float y;
     float g;
@@ -19,7 +19,7 @@ struct player {
     camera_t *camera;
     object_t **objects;
     size_t objects_count;
-} typedef player_t;
+} player_t;
 
 player_t *player_new(camera_t *camera);
 void player_free(player_t *player);

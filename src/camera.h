@@ -2,13 +2,13 @@
 #define CAMERA_H
 #include "SDL2/SDL_rect.h"
 
-struct camera {
+typedef struct camera {
     float x;
     float y;
     float w;
     float h;
     float scale;
-} typedef camera_t;
+} camera_t;
 
 camera_t camera_new(float w, float h);
 

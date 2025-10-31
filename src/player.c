@@ -14,7 +14,7 @@ SDL_GameController *s_player_controller = NULL;
 
 static const float player_velo = 150.0f;
 static const float player_width = 40, player_height = 60;
-static const float player_jump_max = 0.6f;
+static const float player_jump_max = 0.4f;
 
 int is_controller_down(SDL_GameControllerButton button) {
   if (!s_player_controller)
@@ -27,8 +27,8 @@ player_t *player_new(camera_t *camera) {
   *p = (player_t){.x = 30,
                   .y = 30,
                   .camera = camera,
-                  .g = 300,
-                  .objects = malloc(0),
+                  .g = 500,
+                  .objects = NULL,
                   .objects_count = 0};
   return p;
 }
@@ -74,7 +74,8 @@ void player_update(player_t *player, float delta) {
 
   if (jump_held && player->is_jumping) {
     player->jump_held_for += delta;
-    player->vy -= (player->g + 200) * delta;
+    float fall_off = 1 - player->jump_held_for / player_jump_max;
+    player->vy -= fall_off * (player->g + 900) * delta;
     if (player->jump_held_for >= player_jump_max) {
       player->vy = 0.1f;
       player->is_jumping = 0;
@@ -84,7 +85,7 @@ void player_update(player_t *player, float delta) {
       SDL_Log("Jumping");
       player->is_jumping = 1;
       player->jump_held_for = 0;
-      player->vy = -(player->g + 500) * delta;
+      player->vy = -(player->g + 1400) * delta;
     }
   } else if (!jump_held && player->is_jumping) {
     player->vy = 0.1f;
@@ -97,7 +98,7 @@ void player_update(player_t *player, float delta) {
   if (player->vy != 0)
     player->vx += 0.0001;
 
-  float nx, ny;
+  float nx = 0, ny = 0;
   float time = 1.0f;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];

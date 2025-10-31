@@ -4,6 +4,7 @@
 #include "SDL2/SDL_timer.h"
 #include "object.h"
 #include "player.h"
+#include "scene.h"
 #include <SDL2/SDL.h>
 
 void logger(void *, int, SDL_LogPriority, const char *msg) {
@@ -18,21 +19,14 @@ int main(int, char *[]) {
 
   SDL_Renderer *renderer =
       SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  int w, h;
-  SDL_GetRendererOutputSize(renderer, &w, &h);
 
 #ifdef LINUX
   SDL_LogSetOutputFunction(logger, NULL);
 #endif
 
-  camera_t camera = camera_new(w, h);
-  object_t *objects[] = {
-      object_new(shape_make_rect(20, 220, 200, 80)),
-      object_new(shape_make_rect(380, 120, 100, 40)),
-  };
-  player_t *player = player_new(&camera);
-  player->objects = objects;
-  player->objects_count = sizeof(objects) / sizeof(object_t *);
+  scenes_register(window, renderer);
+
+  current_scene->init(current_scene);
 
   int running = 1;
   Uint64 last = SDL_GetPerformanceCounter();
@@ -41,7 +35,7 @@ int main(int, char *[]) {
     Uint64 now = SDL_GetPerformanceCounter();
     float delta = (float)(now - last) / (float)SDL_GetPerformanceFrequency();
     last = now;
-    player_update(player, delta);
+    current_scene->update(current_scene, delta);
 
     if (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -52,24 +46,18 @@ int main(int, char *[]) {
         s_player_controller = SDL_GameControllerOpen(event.cdevice.which);
       } break;
       default: {
-        player_event(player, &event);
+        current_scene->event(current_scene, &event);
       } break;
       }
     }
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
-    player_render(player, renderer);
-    for (int i = 0; i < sizeof(objects) / sizeof(object_t *); ++i) {
-      object_render(objects[i], renderer, &camera);
-    }
+    current_scene->render(current_scene);
     SDL_RenderPresent(renderer);
   }
 
-  player_free(player);
-  for (int i = 0; i < sizeof(objects) / sizeof(object_t *); ++i) {
-    object_free(objects[i]);
-  }
+  scene_free(scene_game_level1);
 
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
