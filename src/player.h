@@ -4,6 +4,7 @@
 #include "SDL2/SDL_render.h"
 #include "object.h"
 #include "camera.h"
+#include "textures.h"
 
 extern SDL_GameController *s_player_controller;
 
@@ -19,6 +20,9 @@ typedef struct player {
     camera_t *camera;
     object_t **objects;
     size_t objects_count;
+    tex_index_t sprite;
+    float anim_counter;
+    int direction;
 } player_t;
 
 player_t *player_new(camera_t *camera);

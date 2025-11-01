@@ -25,11 +25,14 @@ typedef struct shape {
 
 shape_t shape_make_rect(float x, float y, float w, float h);
 
+typedef enum object_type { OBJECT_GROUND } object_type_t;
+
 typedef struct object {
   shape_t shape;
+  SDL_Texture *tex;
 } object_t;
 
-object_t *object_new(shape_t shape);
+object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w, int h);
 
 void object_render(object_t *object, SDL_Renderer *renderer, camera_t const *camera);
 

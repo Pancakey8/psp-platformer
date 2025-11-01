@@ -6,6 +6,7 @@
 #include "SDL2/SDL_render.h"
 #include "SDL2/SDL_surface.h"
 #include "camera.h"
+#include "object.h"
 #include "player.h"
 #include <SDL2/SDL_ttf.h>
 #include <string.h>
@@ -37,10 +38,7 @@ void game_level1_init(scene_t *scene) {
   SDL_GetRendererOutputSize(scene->renderer, &w, &h);
   level_data_t *data = scene->data;
   data->camera = camera_new(w, h);
-  object_t *objs[] = {
-      object_new(shape_make_rect(20, 220, 200, 80)),
-      object_new(shape_make_rect(250, 150, 100, 40)),
-  };
+  object_t *objs[] = {object_make_ground(scene->renderer, 20, 120, 256, 64)};
   data->objects_count = sizeof(objs) / sizeof(object_t *);
   data->objects = calloc(data->objects_count, sizeof(object_t *));
   memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
@@ -80,7 +78,7 @@ typedef struct main_menu_data {
   // title
   SDL_Rect title_rect;
   SDL_Texture *title_texture;
-  // press start 
+  // press start
   SDL_Rect start_rect;
   SDL_Texture *start_texture;
 } main_menu_data_t;
@@ -99,8 +97,7 @@ void main_menu_init(struct scene *scene) {
                                 surface->w, surface->h};
   data->title_texture = SDL_CreateTextureFromSurface(scene->renderer, surface);
   SDL_FreeSurface(surface);
-  surface =
-      TTF_RenderUTF8_Blended(data->font_s, "Press start", fg);
+  surface = TTF_RenderUTF8_Blended(data->font_s, "Press start", fg);
   data->start_rect = (SDL_Rect){(data->w - surface->w) / 2, data->h / 3 + gap,
                                 surface->w, surface->h};
   data->start_texture = SDL_CreateTextureFromSurface(scene->renderer, surface);

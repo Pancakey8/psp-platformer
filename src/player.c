@@ -8,12 +8,13 @@
 #include "SDL2/SDL_render.h"
 #include "camera.h"
 #include "object.h"
+#include "textures.h"
 #include <math.h>
 
 SDL_GameController *s_player_controller = NULL;
 
 static const float player_velo = 150.0f;
-static const float player_width = 40, player_height = 60;
+static const float player_width = 32, player_height = 48;
 static const float player_jump_max = 0.4f;
 
 int is_controller_down(SDL_GameControllerButton button) {
@@ -28,8 +29,10 @@ player_t *player_new(camera_t *camera) {
                   .y = 30,
                   .camera = camera,
                   .g = 500,
+                  .direction = 1,
                   .objects = NULL,
-                  .objects_count = 0};
+                  .objects_count = 0,
+                  .sprite = TI_PLAYER_IDLE};
   return p;
 }
 
@@ -49,10 +52,14 @@ void player_update(player_t *player, float delta) {
 
   player->vx += dirx * player_velo * delta;
 
+  if (dirx != 0)
+    player->direction = dirx;
+
 #ifdef LINUX
   char jump_held = kb[SDL_SCANCODE_W];
 #else
-  char jump_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_UP) || is_controller_down(SDL_CONTROLLER_BUTTON_X);
+  char jump_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_UP) ||
+                   is_controller_down(SDL_CONTROLLER_BUTTON_X);
 #endif
   // SDL_Log("%f,%b", dirx, jump_held);
 
@@ -145,6 +152,28 @@ void player_update(player_t *player, float delta) {
   player->camera->x += dx * delta / 0.3f;
   float dy = player->y - player->camera->y;
   player->camera->y += dy * delta / 0.3f;
+
+  if (dirx != 0) {
+    static tex_index_t walk_cycle[] = {TI_PLAYER_WALK1, TI_PLAYER_WALK2,
+                                       TI_PLAYER_WALK3, TI_PLAYER_WALK4};
+    static size_t sz = sizeof(walk_cycle) / sizeof(tex_index_t);
+    if (player->anim_counter >= 0.2) {
+      player->anim_counter = 0;
+      if (player->sprite == TI_PLAYER_IDLE)
+        player->sprite = TI_PLAYER_WALK1;
+      else {
+        for (size_t i = 0; i < sz; ++i) {
+          if (player->sprite == walk_cycle[i]) {
+            player->sprite = walk_cycle[(i + 1) % sz];
+            break;
+          }
+        }
+      }
+    }
+  } else {
+    player->sprite = TI_PLAYER_IDLE;
+  }
+  player->anim_counter += delta;
 }
 
 void player_event(player_t *player, const SDL_Event *event) {
@@ -161,13 +190,21 @@ void player_render(player_t *player, SDL_Renderer *renderer) {
   int w, h;
   SDL_GetRendererOutputSize(renderer, &w, &h);
 
-  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+  // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
   SDL_FPoint pos = world2camp(player->camera, player->x, player->y);
-  SDL_RenderFillRectF(
-      renderer, &(SDL_FRect){.x = pos.x,
-                             .y = pos.y,
-                             .w = world2caml(player->camera, player_width),
-                             .h = world2caml(player->camera, player_height)});
+  tex_pos_t tpos = s_tex_pos[player->sprite];
+  SDL_RenderCopyEx(
+      renderer, s_texture_map,
+      &(SDL_Rect){.x = tpos.x, .y = tpos.y, .w = tpos.w, .h = tpos.h},
+      &(SDL_Rect){.x = pos.x, .y = pos.y, .w = tpos.w * 2, .h = tpos.h * 2},
+      0, NULL, player->direction == 1 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL);
+  SDL_Log("Drawing as %d\n", player->sprite);
+  // SDL_RenderFillRectF(
+  //     renderer, &(SDL_FRect){.x = pos.x,
+  //                            .y = pos.y,
+  //                            .w = world2caml(player->camera, player_width),
+  //                            .h = world2caml(player->camera,
+  //                            player_height)});
 }
 
 shape_t player_get_shape(player_t *player) {

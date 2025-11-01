@@ -1,6 +1,7 @@
 #include "object.h"
 #include "SDL2/SDL_render.h"
 #include "camera.h"
+#include "textures.h"
 
 char collides_rectnrect(rect_t a, rect_t b) {
   return (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h &&
@@ -80,16 +81,30 @@ void object_render(object_t *object, SDL_Renderer *renderer,
     rect_t rect = object->shape.data.rect;
     SDL_FPoint pos = world2camp(camera, rect.x, rect.y);
     float w = world2caml(camera, rect.w), h = world2caml(camera, rect.h);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRectF(renderer,
-                        &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h = h});
+    SDL_RenderCopy(renderer, object->tex, NULL, &(SDL_Rect){.x = pos.x, .y = pos.y, .w = w, .h = h});
+    // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    // SDL_RenderFillRectF(renderer,
+    //                     &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h = h});
   } break;
   }
 }
 
-object_t *object_new(shape_t shape) {
+object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w,
+                             int h) {
+  SDL_Texture *tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_TARGET, w, h);
+  SDL_SetRenderTarget(renderer, tex);
+  for (int i = 0; i < w; i += 32) {
+    for (int j = 0; j < h; j += 32) {
+      tmap_render(renderer, i, j, TI_GROUND_TC);
+    }
+  }
+  SDL_SetRenderTarget(renderer, NULL);
+
   object_t *obj = calloc(1, sizeof(object_t));
-  obj->shape = shape;
+  *obj = (object_t){.shape.kind = COL_RECT,
+                  .shape.data.rect = (rect_t){.x = x, .y = y, .w = w, .h = h},
+                  .tex = tex};
   return obj;
 }
 

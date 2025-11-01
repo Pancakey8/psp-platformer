@@ -1,22 +1,25 @@
 cmake_minimum_required(VERSION 3.11)
 project(psp-platformer)
 
-add_executable(psp-platformer src/main.c src/player.c src/object.c src/camera.c src/scene.c)
+add_executable(psp-platformer src/main.c src/player.c src/object.c src/camera.c src/scene.c src/textures.c)
 
 file(COPY ${CMAKE_SOURCE_DIR}/res DESTINATION ${CMAKE_BINARY_DIR})
 
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
+pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
 
 target_include_directories(psp-platformer PRIVATE
     ${SDL2_INCLUDE_DIRS}
-    ${SDL2_TTF_INCLUDE_DIRS})
+    ${SDL2_TTF_INCLUDE_DIRS}
+    ${SDL2_IMAGE_INCLUDE_DIRS})
 target_compile_options(psp-platformer PRIVATE -ggdb -Wall -Wextra)
 
 target_link_libraries(psp-platformer PRIVATE
     ${SDL2_LIBRARIES}
-    ${SDL2_TTF_LIBRARIES})
+    ${SDL2_TTF_LIBRARIES}
+    ${SDL2_IMAGE_LIBRARIES})
 
 if(PSP)
     create_pbp_file(

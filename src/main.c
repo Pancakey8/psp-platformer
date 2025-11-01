@@ -6,6 +6,7 @@
 #include "object.h"
 #include "player.h"
 #include "scene.h"
+#include "textures.h"
 #include <SDL2/SDL.h>
 
 void logger(void *, int, SDL_LogPriority, const char *msg) {
@@ -21,6 +22,8 @@ int main(int, char *[]) {
 
   SDL_Renderer *renderer =
       SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+  tmap_init(renderer);
 
 #ifdef LINUX
   SDL_LogSetOutputFunction(logger, NULL);
