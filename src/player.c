@@ -123,8 +123,8 @@ void player_update(player_t *player, float delta) {
     }
   }
 
-  SDL_Log("vx=%f,vy=%f", player->vx, player->vy);
-  SDL_Log("nx=%f,ny=%f,t=%f,gnd=%b", nx, ny, time, grounded);
+  // SDL_Log("vx=%f,vy=%f", player->vx, player->vy);
+  // SDL_Log("nx=%f,ny=%f,t=%f,gnd=%b", nx, ny, time, grounded);
 
   player->x += player->vx * time;
   player->y += player->vy * time;
@@ -198,7 +198,7 @@ void player_render(player_t *player, SDL_Renderer *renderer) {
       &(SDL_Rect){.x = tpos.x, .y = tpos.y, .w = tpos.w, .h = tpos.h},
       &(SDL_Rect){.x = pos.x, .y = pos.y, .w = tpos.w * 2, .h = tpos.h * 2},
       0, NULL, player->direction == 1 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL);
-  SDL_Log("Drawing as %d\n", player->sprite);
+  // SDL_Log("Drawing as %d\n", player->sprite);
   // SDL_RenderFillRectF(
   //     renderer, &(SDL_FRect){.x = pos.x,
   //                            .y = pos.y,
