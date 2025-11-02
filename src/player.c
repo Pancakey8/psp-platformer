@@ -23,10 +23,10 @@ int is_controller_down(SDL_GameControllerButton button) {
   return SDL_GameControllerGetButton(s_player_controller, button) != 0;
 }
 
-player_t *player_new(camera_t *camera) {
+player_t *player_new(camera_t *camera, float x, float y) {
   player_t *p = calloc(1, sizeof(player_t));
-  *p = (player_t){.x = 30,
-                  .y = 30,
+  *p = (player_t){.x = x,
+                  .y = y,
                   .camera = camera,
                   .g = 500,
                   .direction = 1,

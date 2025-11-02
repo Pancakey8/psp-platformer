@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "object.h"
 #include "player.h"
+#include "textures.h"
 #include <SDL2/SDL_ttf.h>
 #include <string.h>
 
@@ -38,11 +39,15 @@ void game_level1_init(scene_t *scene) {
   SDL_GetRendererOutputSize(scene->renderer, &w, &h);
   level_data_t *data = scene->data;
   data->camera = camera_new(w, h);
-  object_t *objs[] = {object_make_ground(scene->renderer, 20, 120, 256, 64)};
+  object_t *objs[] = {
+      object_make_ground(scene->renderer, 0, 0, 58 * 32, 5 * 32, 0),
+      object_make_ground(scene->renderer, 9 * 32, -3 * 32, 2 * 32, 1 * 32, 0),
+      object_make_ground(scene->renderer, 13 * 32, -5 * 32, 2 * 32, 5 * 32,
+                         OBJECT_IGNORE_BOT)};
   data->objects_count = sizeof(objs) / sizeof(object_t *);
   data->objects = calloc(data->objects_count, sizeof(object_t *));
   memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
-  data->player = player_new(&data->camera);
+  data->player = player_new(&data->camera, 0, -2 * 32);
   data->player->objects = data->objects;
   data->player->objects_count = data->objects_count;
 }
@@ -55,6 +60,8 @@ void game_level1_update(scene_t *scene, float dt) {
   player_update(data->player, dt);
 }
 void game_level1_render(scene_t *scene) {
+  SDL_SetRenderDrawColor(scene->renderer, 0, 170, 255, 255);
+  SDL_RenderClear(scene->renderer);
   level_data_t *data = scene->data;
   player_render(data->player, scene->renderer);
   for (size_t i = 0; i < data->objects_count; ++i) {

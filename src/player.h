@@ -25,7 +25,7 @@ typedef struct player {
     int direction;
 } player_t;
 
-player_t *player_new(camera_t *camera);
+player_t *player_new(camera_t *camera, float x, float y);
 void player_free(player_t *player);
 
 void player_update(player_t *player, float delta);
