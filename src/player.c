@@ -124,6 +124,8 @@ void player_update(player_t *player, float delta) {
 
   if (player->vy != 0)
     player->vx += 0.0001;
+  else if (player->vx != 0)
+    player->vy += 0.0001;
 
   float nx = 0, ny = 0;
   float time = 1.0f;
