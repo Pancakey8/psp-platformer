@@ -27,6 +27,8 @@ player_t *player_new(camera_t *camera, float x, float y) {
   player_t *p = calloc(1, sizeof(player_t));
   *p = (player_t){.x = x,
                   .y = y,
+                  .w = player_width,
+                  .h = player_height,
                   .camera = camera,
                   .g = 500,
                   .direction = 1,
@@ -59,7 +61,7 @@ void player_update(player_t *player, float delta) {
   char jump_held = kb[SDL_SCANCODE_W];
 #else
   char jump_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_UP) ||
-                   is_controller_down(SDL_CONTROLLER_BUTTON_X);
+                   is_controller_down(SDL_CONTROLLER_BUTTON_A);
 #endif
   // SDL_Log("%f,%b", dirx, jump_held);
 
@@ -78,6 +80,24 @@ void player_update(player_t *player, float delta) {
     }
   }
   p_rect.y -= 0.1;
+
+#ifdef LINUX
+  char crawl_held = kb[SDL_SCANCODE_S];
+#else
+  char crawl_held = is_controller_down(SDL_CONTROLLER_BUTTON_DPAD_DOWN) ||
+                    is_controller_down(SDL_CONTROLLER_BUTTON_X);
+#endif
+
+  if (crawl_held && player->w == player_width) {
+    player->anim_counter = FLT_MAX;
+    player->w = player_height;
+    player->h = player_width;
+  } else if (!crawl_held && player->w == player_height) {
+    player->anim_counter = FLT_MAX;
+    player->y -= player_height - player_width;
+    player->w = player_width;
+    player->h = player_height;
+  }
 
   if (jump_held && player->is_jumping) {
     player->jump_held_for += delta;
@@ -123,8 +143,8 @@ void player_update(player_t *player, float delta) {
     }
   }
 
-  // SDL_Log("vx=%f,vy=%f", player->vx, player->vy);
-  // SDL_Log("nx=%f,ny=%f,t=%f,gnd=%b", nx, ny, time, grounded);
+  SDL_Log("vx=%f,vy=%f", player->vx, player->vy);
+  SDL_Log("nx=%f,ny=%f,t=%f,gnd=%b", nx, ny, time, grounded);
 
   player->x += player->vx * time;
   player->y += player->vy * time;
@@ -156,22 +176,42 @@ void player_update(player_t *player, float delta) {
   if (dirx != 0) {
     static tex_index_t walk_cycle[] = {TI_PLAYER_WALK1, TI_PLAYER_WALK2,
                                        TI_PLAYER_WALK3, TI_PLAYER_WALK4};
-    static size_t sz = sizeof(walk_cycle) / sizeof(tex_index_t);
+    static size_t walk_sz = sizeof(walk_cycle) / sizeof(tex_index_t);
+    static tex_index_t crawl_cycle[] = {TI_PLAYER_CRAWL1, TI_PLAYER_CRAWL2,
+                                        TI_PLAYER_CRAWL3};
+    static size_t crawl_sz = sizeof(crawl_cycle) / sizeof(tex_index_t);
     if (player->anim_counter >= 0.2) {
       player->anim_counter = 0;
-      if (player->sprite == TI_PLAYER_IDLE)
-        player->sprite = TI_PLAYER_WALK1;
-      else {
-        for (size_t i = 0; i < sz; ++i) {
-          if (player->sprite == walk_cycle[i]) {
-            player->sprite = walk_cycle[(i + 1) % sz];
+      if (crawl_held) {
+        char is_set = 0;
+        for (size_t i = 0; i < crawl_sz; ++i) {
+          if (player->sprite == crawl_cycle[i]) {
+            player->sprite = crawl_cycle[(i + 1) % crawl_sz];
+            is_set = 1;
             break;
           }
         }
+        if (!is_set)
+          player->sprite = crawl_cycle[0];
+      } else {
+        char is_set = 0;
+        for (size_t i = 0; i < walk_sz; ++i) {
+          if (player->sprite == walk_cycle[i]) {
+            player->sprite = walk_cycle[(i + 1) % walk_sz];
+            is_set = 1;
+            break;
+          }
+        }
+        if (!is_set)
+          player->sprite = walk_cycle[0];
       }
     }
   } else {
-    player->sprite = TI_PLAYER_IDLE;
+    if (crawl_held) {
+      player->sprite = TI_PLAYER_CRAWL1;
+    } else {
+      player->sprite = TI_PLAYER_IDLE;
+    }
   }
   player->anim_counter += delta;
 }
@@ -190,23 +230,22 @@ void player_render(player_t *player, SDL_Renderer *renderer) {
   int w, h;
   SDL_GetRendererOutputSize(renderer, &w, &h);
 
-  // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
   SDL_FPoint pos = world2camp(player->camera, player->x, player->y);
   tex_pos_t tpos = s_tex_pos[player->sprite];
   SDL_RenderCopyEx(
       renderer, s_texture_map,
       &(SDL_Rect){.x = tpos.x, .y = tpos.y, .w = tpos.w, .h = tpos.h},
-      &(SDL_Rect){.x = pos.x, .y = pos.y, .w = tpos.w * 2, .h = tpos.h * 2},
-      0, NULL, player->direction == 1 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL);
+      &(SDL_Rect){.x = pos.x, .y = pos.y, .w = tpos.w * 2, .h = tpos.h * 2}, 0,
+      NULL, player->direction == 1 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL);
   // SDL_Log("Drawing as %d\n", player->sprite);
-  // SDL_RenderFillRectF(
-  //     renderer, &(SDL_FRect){.x = pos.x,
-  //                            .y = pos.y,
-  //                            .w = world2caml(player->camera, player_width),
-  //                            .h = world2caml(player->camera,
-  //                            player_height)});
+  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+  SDL_RenderDrawRectF(renderer,
+                      &(SDL_FRect){.x = pos.x,
+                                   .y = pos.y,
+                                   .w = world2caml(player->camera, player->w),
+                                   .h = world2caml(player->camera, player->h)});
 }
 
 shape_t player_get_shape(player_t *player) {
-  return shape_make_rect(player->x, player->y, player_width, player_height);
+  return shape_make_rect(player->x, player->y, player->w, player->h);
 }

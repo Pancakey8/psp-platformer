@@ -19,6 +19,9 @@ tex_pos_t s_tex_pos[TI_COUNT] = {
     [TI_PLAYER_WALK2] = (tex_pos_t){.x = 48, .y = 192, .w = 16, .h = 24},
     [TI_PLAYER_WALK3] = (tex_pos_t){.x = 64, .y = 192, .w = 16, .h = 24},
     [TI_PLAYER_WALK4] = (tex_pos_t){.x = 80, .y = 192, .w = 16, .h = 24},
+    [TI_PLAYER_CRAWL1] = (tex_pos_t){.x = 24, .y = 224, .w = 24, .h = 16},
+    [TI_PLAYER_CRAWL2] = (tex_pos_t){.x = 48, .y = 224, .w = 24, .h = 16},
+    [TI_PLAYER_CRAWL3] = (tex_pos_t){.x = 72, .y = 224, .w = 24, .h = 16},
 };
 
 void tmap_init(SDL_Renderer *renderer) {

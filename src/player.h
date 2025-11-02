@@ -11,6 +11,8 @@ extern SDL_GameController *s_player_controller;
 typedef struct player {
     float x;
     float y;
+    float w;
+    float h;
     float g;
     float vx;
     float vy;
