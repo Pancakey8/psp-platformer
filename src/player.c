@@ -70,6 +70,7 @@ void player_update(player_t *player, float delta) {
   char grounded = 0;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];
+    if (obj->shape.passthrough) continue;
     switch (obj->shape.kind) {
     case COL_RECT: {
       if (collides_rectnrect(p_rect, obj->shape.data.rect)) {
@@ -88,15 +89,34 @@ void player_update(player_t *player, float delta) {
                     is_controller_down(SDL_CONTROLLER_BUTTON_X);
 #endif
 
+  float old_anim = player->anim_counter, old_w = player->w, old_h = player->h, old_y = player->y;
   if (crawl_held && player->w == player_width) {
     player->anim_counter = FLT_MAX;
+    player->y += player_height - player_width + 4;
     player->w = player_height;
-    player->h = player_width;
-  } else if (!crawl_held && player->w == player_height) {
+    player->h = player_width - 4;
+  } else if (!crawl_held && player->w != player_width) {
     player->anim_counter = FLT_MAX;
-    player->y -= player_height - player_width;
+    player->y -= player_height - player_width + 4;
     player->w = player_width;
     player->h = player_height;
+  }
+  p_rect = player_get_shape(player).data.rect;
+  for (size_t i = 0; i < player->objects_count; ++i) {
+    object_t *obj = player->objects[i];
+    if (obj->shape.passthrough) continue;
+    switch (obj->shape.kind) {
+    case COL_RECT: {
+      if (collides_rectnrect(p_rect, obj->shape.data.rect)) {
+        player->w = old_w;
+        player->h = old_h;
+        player->y = old_y;
+        player->anim_counter = old_anim;
+        crawl_held = !crawl_held;
+        break;
+      }
+    } break;
+    }
   }
 
   if (jump_held && player->is_jumping) {
@@ -129,8 +149,10 @@ void player_update(player_t *player, float delta) {
 
   float nx = 0, ny = 0;
   float time = 1.0f;
+  p_rect = player_get_shape(player).data.rect;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];
+    if (obj->shape.passthrough) continue;
     switch (obj->shape.kind) {
     case COL_RECT: {
       float nx_, ny_;
@@ -240,12 +262,12 @@ void player_render(player_t *player, SDL_Renderer *renderer) {
       &(SDL_Rect){.x = pos.x, .y = pos.y, .w = tpos.w * 2, .h = tpos.h * 2}, 0,
       NULL, player->direction == 1 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL);
   // SDL_Log("Drawing as %d\n", player->sprite);
-  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-  SDL_RenderDrawRectF(renderer,
-                      &(SDL_FRect){.x = pos.x,
-                                   .y = pos.y,
-                                   .w = world2caml(player->camera, player->w),
-                                   .h = world2caml(player->camera, player->h)});
+  // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+  // SDL_RenderDrawRectF(renderer,
+  //                     &(SDL_FRect){.x = pos.x,
+  //                                  .y = pos.y,
+  //                                  .w = world2caml(player->camera, player->w),
+  //                                  .h = world2caml(player->camera, player->h)});
 }
 
 shape_t player_get_shape(player_t *player) {

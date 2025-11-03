@@ -40,16 +40,20 @@ void game_level1_init(scene_t *scene) {
   level_data_t *data = scene->data;
   data->camera = camera_new(w, h);
   object_t *objs[] = {
-      object_make_ground(scene->renderer, 0, 0, 58 * 32, 5 * 32, 0),
-      object_make_ground(scene->renderer, 9 * 32, -3 * 32, 2 * 32, 1 * 32, 0),
-      object_make_ground(scene->renderer, 13 * 32, -5 * 32, 2 * 32, 5 * 32,
-                         OBJECT_IGNORE_BOT)};
-  data->objects_count = sizeof(objs) / sizeof(object_t *);
-  data->objects = calloc(data->objects_count, sizeof(object_t *));
-  memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
-  data->player = player_new(&data->camera, 0, -2 * 32);
-  data->player->objects = data->objects;
-  data->player->objects_count = data->objects_count;
+    object_make_ground(scene->renderer, 0, 0, 58 * 32, 5 * 32, 0),
+    object_make_ground(scene->renderer, 9 * 32, -3 * 32, 2 * 32, 1 * 32, 0),
+    object_make_ground(scene->renderer, 13 * 32, -5 * 32, 2 * 32, 5 * 32,
+                       OBJECT_IGNORE_BOT),
+    object_make_ground(scene->renderer, 21 * 32, -5 * 32, 2 * 32, 4 * 32, 0),
+    object_make_text(scene->renderer, 5 * 32, -2 * 32, 20, "Jump (X)"),
+    object_make_text(scene->renderer, 17 * 32 - 30, -2 * 32, 20, "Crawl (Square)")
+};
+data->objects_count = sizeof(objs) / sizeof(object_t *);
+data->objects = calloc(data->objects_count, sizeof(object_t *));
+memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
+data->player = player_new(&data->camera, 0, -2 * 32);
+data->player->objects = data->objects;
+data->player->objects_count = data->objects_count;
 }
 void game_level1_event(scene_t *scene, SDL_Event const *event) {
   level_data_t *data = scene->data;
@@ -92,7 +96,7 @@ typedef struct main_menu_data {
 
 void main_menu_init(struct scene *scene) {
   main_menu_data_t *data = scene->data;
-  data->font_s = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", 12);
+  data->font_s = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", 24);
   data->font_l = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", 36);
   SDL_GetRendererOutputSize(scene->renderer, &data->w, &data->h);
 

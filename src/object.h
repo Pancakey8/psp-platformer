@@ -22,11 +22,11 @@ typedef struct shape {
   union {
     rect_t rect;
   } data;
+  char passthrough;
 } shape_t;
 
 shape_t shape_make_rect(float x, float y, float w, float h);
 
-typedef enum object_type { OBJECT_GROUND } object_type_t;
 typedef enum object_sides {
   OBJECT_SIDE_ALL = 0,
   OBJECT_IGNORE_TOP = 1,
@@ -42,6 +42,8 @@ typedef struct object {
 
 object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w,
                              int h, int sides);
+
+object_t *object_make_text(SDL_Renderer *renderer, int x, int y, int f_size, char *text);
 
 void object_render(object_t *object, SDL_Renderer *renderer,
                    camera_t const *camera);

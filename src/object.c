@@ -1,5 +1,7 @@
 #include "object.h"
 #include "SDL2/SDL_render.h"
+#include "SDL2/SDL_surface.h"
+#include "SDL2/SDL_ttf.h"
 #include "camera.h"
 #include "textures.h"
 
@@ -83,9 +85,9 @@ void object_render(object_t *object, SDL_Renderer *renderer,
     float w = world2caml(camera, rect.w), h = world2caml(camera, rect.h);
     SDL_RenderCopy(renderer, object->tex, NULL,
                    &(SDL_Rect){.x = pos.x, .y = pos.y, .w = w, .h = h});
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderDrawRectF(renderer,
-                        &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h = h});
+    // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    // SDL_RenderDrawRectF(renderer,
+    //                     &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h = h});
   } break;
   }
 }
@@ -145,6 +147,23 @@ object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w, int h,
   *obj = (object_t){.shape.kind = COL_RECT,
                     .shape.data.rect = (rect_t){.x = x, .y = y, .w = w, .h = h},
                     .tex = tex};
+  return obj;
+}
+
+object_t *object_make_text(SDL_Renderer *renderer, int x, int y, int f_size,
+                           char *text) {
+  TTF_Font *font = TTF_OpenFont("res/fonts/Finesse-Oblique.otf", f_size);
+  SDL_Surface *surf = TTF_RenderText_Blended(
+      font, text, (SDL_Color){.r = 0, .g = 0, .b = 0, .a = 255});
+  SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, surf);
+  int w = surf->w, h = surf->h;
+  SDL_FreeSurface(surf);
+  object_t *obj = calloc(1, sizeof(object_t));
+  obj->shape.kind = COL_RECT;
+  obj->shape.data.rect = (rect_t){.x = x, .y = y, .w = w, .h = h};
+  obj->shape.passthrough = 1;
+  obj->tex = tex;
+  TTF_CloseFont(font);
   return obj;
 }
 
