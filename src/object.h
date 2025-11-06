@@ -38,12 +38,17 @@ typedef enum object_sides {
 typedef struct object {
   shape_t shape;
   SDL_Texture *tex;
+  char is_hurtbox;
+  rect_t hurtbox;
 } object_t;
 
-object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w,
-                             int h, int sides);
+object_t *object_make_ground(SDL_Renderer *renderer, int x, int y, int w, int h,
+                             int sides);
 
-object_t *object_make_text(SDL_Renderer *renderer, int x, int y, int f_size, char *text);
+object_t *object_make_text(SDL_Renderer *renderer, int x, int y, int f_size,
+                           char *text);
+
+object_t *object_make_snake(SDL_Renderer *renderer, int x, int y);
 
 void object_render(object_t *object, SDL_Renderer *renderer,
                    camera_t const *camera);

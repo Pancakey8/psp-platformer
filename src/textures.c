@@ -14,6 +14,7 @@ tex_pos_t s_tex_pos[TI_COUNT] = {
     [TI_GROUND_BL] = tpos_make_tile(0, 160),
     [TI_GROUND_BC] = tpos_make_tile(16, 160),
     [TI_GROUND_BR] = tpos_make_tile(32, 160),
+    [TI_SNAKE1] = tpos_make_tile(0, 272),
     [TI_PLAYER_IDLE] = (tex_pos_t){.x = 16, .y = 192, .w = 16, .h = 24},
     [TI_PLAYER_WALK1] = (tex_pos_t){.x = 32, .y = 192, .w = 16, .h = 24},
     [TI_PLAYER_WALK2] = (tex_pos_t){.x = 48, .y = 192, .w = 16, .h = 24},
@@ -21,7 +22,7 @@ tex_pos_t s_tex_pos[TI_COUNT] = {
     [TI_PLAYER_WALK4] = (tex_pos_t){.x = 80, .y = 192, .w = 16, .h = 24},
     [TI_PLAYER_CRAWL1] = (tex_pos_t){.x = 24, .y = 224, .w = 24, .h = 16},
     [TI_PLAYER_CRAWL2] = (tex_pos_t){.x = 48, .y = 224, .w = 24, .h = 16},
-    [TI_PLAYER_CRAWL3] = (tex_pos_t){.x = 72, .y = 224, .w = 24, .h = 16},
+    [TI_PLAYER_CRAWL3] = (tex_pos_t){.x = 72, .y = 224, .w = 24, .h = 16}
 };
 
 void tmap_init(SDL_Renderer *renderer) {

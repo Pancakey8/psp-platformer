@@ -8,6 +8,8 @@ typedef struct scene {
   SDL_Window *window;
   SDL_Renderer *renderer;
   void *data;
+  size_t data_size;
+  struct scene **direct_ref;
 
   void (*init)(struct scene *scene);
   void (*event)(struct scene *scene, SDL_Event const *event);
@@ -21,7 +23,10 @@ scene_t *scene_new_direct(scene_t scene);
 void scene_free(scene_t *scene);
 
 extern scene_t *scene_game_level1;
+extern scene_t *scene_main_menu;
 
 extern scene_t *current_scene;
 void scenes_register(SDL_Window *window, SDL_Renderer *renderer);
+
+void scene_switch(scene_t *other);
 #endif

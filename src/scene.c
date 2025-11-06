@@ -46,14 +46,16 @@ void game_level1_init(scene_t *scene) {
                        OBJECT_IGNORE_BOT),
     object_make_ground(scene->renderer, 21 * 32, -5 * 32, 2 * 32, 4 * 32, 0),
     object_make_text(scene->renderer, 5 * 32, -2 * 32, 20, "Jump (X)"),
-    object_make_text(scene->renderer, 17 * 32 - 30, -2 * 32, 20, "Crawl (Square)")
-};
-data->objects_count = sizeof(objs) / sizeof(object_t *);
-data->objects = calloc(data->objects_count, sizeof(object_t *));
-memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
-data->player = player_new(&data->camera, 0, -2 * 32);
-data->player->objects = data->objects;
-data->player->objects_count = data->objects_count;
+    object_make_text(scene->renderer, 17 * 32 - 30, -2 * 32, 20,
+                     "Crawl (Square)"),
+    object_make_snake(scene->renderer, 27 * 32, -1 * 32),
+    object_make_snake(scene->renderer, 28 * 32, -1 * 32)};
+  data->objects_count = sizeof(objs) / sizeof(object_t *);
+  data->objects = calloc(data->objects_count, sizeof(object_t *));
+  memcpy(data->objects, objs, data->objects_count * sizeof(object_t *));
+  data->player = player_new(&data->camera, 0, -2 * 32);
+  data->player->objects = data->objects;
+  data->player->objects_count = data->objects_count;
 }
 void game_level1_event(scene_t *scene, SDL_Event const *event) {
   level_data_t *data = scene->data;
@@ -62,6 +64,9 @@ void game_level1_event(scene_t *scene, SDL_Event const *event) {
 void game_level1_update(scene_t *scene, float dt) {
   level_data_t *data = scene->data;
   player_update(data->player, dt);
+  if (!data->player->is_alive) {
+    scene_switch(scene_main_menu);
+  }
 }
 void game_level1_render(scene_t *scene) {
   SDL_SetRenderDrawColor(scene->renderer, 0, 170, 255, 255);
@@ -119,13 +124,13 @@ void main_menu_event(struct scene *scene, SDL_Event const *event) {
 #ifdef LINUX
   case SDL_KEYDOWN: {
     if (event->key.keysym.sym == SDLK_RETURN) {
-      current_scene = scene_game_level1;
+      scene_switch(scene_game_level1);
     }
   } break;
 #else
   case SDL_CONTROLLERBUTTONDOWN: {
     if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
-      current_scene = scene_game_level1;
+      scene_switch(scene_game_level1);
     }
   } break;
 #endif
@@ -140,6 +145,7 @@ void main_menu_render(struct scene *scene) {
 void main_menu_destroy(struct scene *scene) {
   main_menu_data_t *data = scene->data;
   TTF_CloseFont(data->font_s);
+  TTF_CloseFont(data->font_l);
   SDL_DestroyTexture(data->title_texture);
 }
 
@@ -152,21 +158,44 @@ void scenes_register(SDL_Window *window, SDL_Renderer *renderer) {
       scene_new_direct((scene_t){.window = window,
                                  .renderer = renderer,
                                  .data = calloc(1, sizeof(level_data_t)),
+                                 .data_size = sizeof(level_data_t),
                                  .init = &game_level1_init,
                                  .event = &game_level1_event,
                                  .update = &game_level1_update,
                                  .render = &game_level1_render,
                                  .destroy = &game_level1_destroy});
+  scene_game_level1->direct_ref = &scene_game_level1;
   scene_game_level1->init(scene_game_level1);
   scene_main_menu =
       scene_new_direct((scene_t){.window = window,
                                  .renderer = renderer,
                                  .data = calloc(1, sizeof(main_menu_data_t)),
+                                 .data_size = sizeof(main_menu_data_t),
                                  .init = &main_menu_init,
                                  .event = &main_menu_event,
                                  .update = &main_menu_update,
                                  .render = &main_menu_render,
                                  .destroy = &main_menu_destroy});
+  scene_main_menu->direct_ref = &scene_main_menu;
   scene_main_menu->init(scene_main_menu);
   current_scene = scene_main_menu;
+}
+
+void scene_switch(scene_t *other) {
+  scene_t restore = (scene_t){
+      .window = current_scene->window,
+      .renderer = current_scene->renderer,
+      .data = calloc(1, current_scene->data_size),
+      .data_size = current_scene->data_size,
+      .init = current_scene->init,
+      .event = current_scene->event,
+      .update = current_scene->update,
+      .render = current_scene->render,
+      .destroy = current_scene->destroy,
+  };
+  restore.direct_ref = current_scene->direct_ref;
+  scene_free(current_scene);
+  *restore.direct_ref = scene_new_direct(restore);
+  restore.init(*restore.direct_ref);
+  current_scene = other;
 }

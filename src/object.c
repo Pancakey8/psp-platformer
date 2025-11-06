@@ -87,7 +87,8 @@ void object_render(object_t *object, SDL_Renderer *renderer,
                    &(SDL_Rect){.x = pos.x, .y = pos.y, .w = w, .h = h});
     // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     // SDL_RenderDrawRectF(renderer,
-    //                     &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h = h});
+    //                     &(SDL_FRect){.x = pos.x, .y = pos.y, .w = w, .h =
+    //                     h});
   } break;
   }
 }
@@ -164,6 +165,29 @@ object_t *object_make_text(SDL_Renderer *renderer, int x, int y, int f_size,
   obj->shape.passthrough = 1;
   obj->tex = tex;
   TTF_CloseFont(font);
+  return obj;
+}
+
+object_t *object_make_snake(SDL_Renderer *renderer, int x, int y) {
+  SDL_Texture *tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_TARGET, 32, 32);
+  SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+  SDL_SetRenderTarget(renderer, tex);
+  tmap_render(renderer, 0, 0, TI_SNAKE1);
+  SDL_SetRenderTarget(renderer, NULL);
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+  SDL_RenderClear(renderer);
+  object_t *obj = calloc(1, sizeof(object_t));
+  obj->shape.kind = COL_RECT;
+  int padding = 10;
+  obj->shape.data.rect = (rect_t){.x = x, .y = y, .w = 32, .h = 32};
+  obj->shape.passthrough = 1;
+  obj->tex = tex;
+  obj->is_hurtbox = 1;
+  obj->hurtbox = (rect_t){.x = x + padding,
+                          .y = y + padding,
+                          .w = 32 - 2 * padding,
+                          .h = 32 - 2 * padding};
   return obj;
 }
 

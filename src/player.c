@@ -13,9 +13,9 @@
 
 SDL_GameController *s_player_controller = NULL;
 
-static const float player_velo = 150.0f;
+static const float player_velo = 180.0f;
 static const float player_width = 32, player_height = 48;
-static const float player_jump_max = 0.4f;
+static const float player_jump_max = 0.45f;
 
 int is_controller_down(SDL_GameControllerButton button) {
   if (!s_player_controller)
@@ -34,7 +34,8 @@ player_t *player_new(camera_t *camera, float x, float y) {
                   .direction = 1,
                   .objects = NULL,
                   .objects_count = 0,
-                  .sprite = TI_PLAYER_IDLE};
+                  .sprite = TI_PLAYER_IDLE,
+                  .is_alive = 1};
   return p;
 }
 
@@ -70,7 +71,8 @@ void player_update(player_t *player, float delta) {
   char grounded = 0;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];
-    if (obj->shape.passthrough) continue;
+    if (obj->shape.passthrough)
+      continue;
     switch (obj->shape.kind) {
     case COL_RECT: {
       if (collides_rectnrect(p_rect, obj->shape.data.rect)) {
@@ -89,7 +91,8 @@ void player_update(player_t *player, float delta) {
                     is_controller_down(SDL_CONTROLLER_BUTTON_X);
 #endif
 
-  float old_anim = player->anim_counter, old_w = player->w, old_h = player->h, old_y = player->y;
+  float old_anim = player->anim_counter, old_w = player->w, old_h = player->h,
+        old_y = player->y;
   if (crawl_held && player->w == player_width) {
     player->anim_counter = FLT_MAX;
     player->y += player_height - player_width + 4;
@@ -104,7 +107,8 @@ void player_update(player_t *player, float delta) {
   p_rect = player_get_shape(player).data.rect;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];
-    if (obj->shape.passthrough) continue;
+    if (obj->shape.passthrough)
+      continue;
     switch (obj->shape.kind) {
     case COL_RECT: {
       if (collides_rectnrect(p_rect, obj->shape.data.rect)) {
@@ -149,23 +153,33 @@ void player_update(player_t *player, float delta) {
 
   float nx = 0, ny = 0;
   float time = 1.0f;
+  char hurt = 0;
   p_rect = player_get_shape(player).data.rect;
   for (size_t i = 0; i < player->objects_count; ++i) {
     object_t *obj = player->objects[i];
-    if (obj->shape.passthrough) continue;
+    if (obj->shape.passthrough && !obj->is_hurtbox)
+      continue;
     switch (obj->shape.kind) {
     case COL_RECT: {
-      float nx_, ny_;
-      float tm = collides_rectnrect_s(p_rect, obj->shape.data.rect, player->vx,
-                                      player->vy, &nx_, &ny_);
+      float nx_, ny_, tm;
+      if (obj->is_hurtbox)
+        tm = collides_rectnrect_s(p_rect, obj->hurtbox, player->vx, player->vy,
+                                  &nx_, &ny_);
+      else
+        tm = collides_rectnrect_s(p_rect, obj->shape.data.rect, player->vx,
+                                  player->vy, &nx_, &ny_);
       if (tm < time) {
         time = tm;
         nx = nx_;
         ny = ny_;
+        hurt = obj->is_hurtbox;
       }
     } break;
     }
   }
+
+  if (hurt)
+    player->is_alive = 0;
 
   SDL_Log("vx=%f,vy=%f", player->vx, player->vy);
   SDL_Log("nx=%f,ny=%f,t=%f,gnd=%b", nx, ny, time, grounded);
@@ -204,7 +218,7 @@ void player_update(player_t *player, float delta) {
     static tex_index_t crawl_cycle[] = {TI_PLAYER_CRAWL1, TI_PLAYER_CRAWL2,
                                         TI_PLAYER_CRAWL3};
     static size_t crawl_sz = sizeof(crawl_cycle) / sizeof(tex_index_t);
-    if (player->anim_counter >= 0.2) {
+    if (player->anim_counter >= 0.18) {
       player->anim_counter = 0;
       if (crawl_held) {
         char is_set = 0;
@@ -266,8 +280,9 @@ void player_render(player_t *player, SDL_Renderer *renderer) {
   // SDL_RenderDrawRectF(renderer,
   //                     &(SDL_FRect){.x = pos.x,
   //                                  .y = pos.y,
-  //                                  .w = world2caml(player->camera, player->w),
-  //                                  .h = world2caml(player->camera, player->h)});
+  //                                  .w = world2caml(player->camera,
+  //                                  player->w), .h =
+  //                                  world2caml(player->camera, player->h)});
 }
 
 shape_t player_get_shape(player_t *player) {

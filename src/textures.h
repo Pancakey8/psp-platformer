@@ -19,6 +19,7 @@ typedef enum tex_index {
   TI_PLAYER_CRAWL1,
   TI_PLAYER_CRAWL2,
   TI_PLAYER_CRAWL3,
+  TI_SNAKE1,
   TI_COUNT
 } tex_index_t;
 
